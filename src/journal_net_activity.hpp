@@ -80,5 +80,12 @@ void JournalNetActivity<numLevels>::outputSuspiciousActivities(
         const TimeStamp& timeTo,
         std::ostream& out) const
 {
-    // TODO: Implement this method!
+    if(timeFrom > timeTo)
+        throw std::invalid_argument("JournalNetActivity error, invalid time period");
+
+    NodeSkipList<NetActivity, TimeStamp, numLevels>* x = _journal.findLastLessThan(timeFrom)->nextJump[0];
+    while(x->key <= timeTo){
+        out << x->key << ' ' << x->value << std::endl;
+        x = x->nextJump[0];
+    }
 }
