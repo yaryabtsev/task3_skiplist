@@ -77,13 +77,13 @@ SkipList<Value, Key, numLevels>::SkipList(double probability)
 //------------------------------------------------------------------------------
 
 template <class Value, class Key, int numLevels>
-SkipList<Value, Key, numLevels>::~SkipList()  // = default;
-{
+SkipList<Value, Key, numLevels>::~SkipList() = default;
+/*{
     Node* x = Base::_preHead;
-    while (x->nextJump[0] != Base::_preHead)
+    while (x->next != Base::_preHead)
         removeNext(x);
     delete x;
-}
+}*/
 
 
 //------------------------------------------------------------------------------
@@ -95,6 +95,8 @@ NodeSkipList<Value,Key, numLevels>* SkipList<Value, Key, numLevels>::findLastLes
     for(int i = numLevels-1; i > -1; --i)
         while (x->nextJump[i]->key < key && x->nextJump[i] != Base::_preHead)
             x = x->nextJump[i];
+    while (x->next->key < key && x->next != Base::_preHead)
+        x = x->next;
     return x;
 }
 
@@ -103,7 +105,7 @@ NodeSkipList<Value,Key, numLevels>* SkipList<Value, Key, numLevels>::findLastLes
 template<class Value, class Key, int numLevels>
 NodeSkipList<Value,Key, numLevels>* SkipList<Value, Key, numLevels>::findFirst(const Key& key) const
 {
-    Node* x = findLastLessThan(key)->nextJump[0];
+    Node* x = findLastLessThan(key)->next;
     if(x->key != key)
         return nullptr;
     return x;
@@ -122,14 +124,15 @@ void SkipList<Value, Key, numLevels>::removeNext(Node* nodeBefore)
     }
     NodeSkipList<Value,Key, numLevels>* x = Base::_preHead->nextJump[numLevels-1];
     for(int i = numLevels - 1; i > -1; --i) {
-        while (x->nextJump[i]->key < (nodeBefore->nextJump[0])->key && x->nextJump[i] != Base::_preHead)
+        while (x->nextJump[i]->key < nodeBefore->next->key && x->nextJump[i] != Base::_preHead)
             x = x->nextJump[i];
-        while (x->nextJump[i] != nodeBefore->nextJump[0] && i <= nodeBefore->nextJump[0]->levelHighest)
+        while (x->nextJump[i] != nodeBefore->next && i <= nodeBefore->next->levelHighest)
             x = x->nextJump[i];
-        if (x->nextJump[i] == nodeBefore->nextJump[0] && i <= nodeBefore->nextJump[0]->levelHighest)
-            (x->nextJump[i]) = (nodeBefore->nextJump[0])->nextJump[i];
+        if (x->nextJump[i] == nodeBefore->next && i <= nodeBefore->next->levelHighest)
+            x->nextJump[i] = nodeBefore->next->nextJump[i];
     }
-    delete[] x;
+    nodeBefore->next = nodeBefore->next->next;
+    delete x;
 }
 
 //------------------------------------------------------------------------------
@@ -159,22 +162,31 @@ void SkipList<Value, Key, numLevels>::insert(const Value& val, const Key& key)
 {
     //int levelHighest = randomLevel(_probability);
     srand(time(0));
-    int levelHighest = 1;
+    int levelHighest = 0;
     while(double(std::abs(rand())) / RAND_MAX <  _probability)
         ++levelHighest;
 
     if(levelHighest > numLevels)
         levelHighest = numLevels;
 
-    Node* newNode = new Node(key, val);
-    (newNode->levelHighest) = levelHighest - 1;
+    //Node* newNode = new Node(key, val);
+    //(newNode->levelHighest) = levelHighest - 1;
+    Node* newNode = new Node;
+    newNode->levelHighest = levelHighest - 1;
+    newNode->value = val;
+    newNode->key = key;
+
     Node* x = Base::_preHead->nextJump[numLevels - 1];
     for(int i = numLevels - 1; i > -1; --i) {
-        while ((x->nextJump)[i]->key <= key && x->nextJump[i] != Base::_preHead)
+        while (x->nextJump[i]->key <= key && x->nextJump[i] != Base::_preHead)
             x = x->nextJump[i];
         if(i <= levelHighest){
-            (newNode->nextJump[i]) = x->nextJump[i];
+            newNode->nextJump[i] = x->nextJump[i];
             x->nextJump[i] = newNode;
         }
     }
+    while (x->next->key <= key && x->next != Base::_preHead)
+        x = x->next;
+    newNode->next = x->next;
+    x->next = newNode;
 }
