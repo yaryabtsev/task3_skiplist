@@ -13,7 +13,6 @@
 
 #include <cstdlib>
 #include "skip_list.h"
-#include <random>
 
 //==============================================================================
 // class NodeSkipList
@@ -123,7 +122,8 @@ void SkipList<Value, Key, numLevels>::removeNext(Node* nodeBefore)
         throw std::invalid_argument("SkipList error, invalid previous node");
     }
     NodeSkipList<Value,Key, numLevels>* x = Base::_preHead->nextJump[numLevels-1];
-    for(int i = numLevels - 1; i > -1; --i) {
+    for(int i = numLevels - 1; i > -1; --i)
+    {
         while (x->nextJump[i]->key < nodeBefore->next->key && x->nextJump[i] != Base::_preHead)
             x = x->nextJump[i];
         while (x->nextJump[i] != nodeBefore->next && i <= nodeBefore->next->levelHighest)
@@ -161,7 +161,7 @@ template<class Value, class Key, int numLevels>
 void SkipList<Value, Key, numLevels>::insert(const Value& val, const Key& key)
 {
     //int levelHighest = randomLevel(_probability);
-    srand(time(0));
+//    srand(time(0));
     int levelHighest = 0;
     while(double(std::abs(rand())) / RAND_MAX <  _probability)
         ++levelHighest;
@@ -177,10 +177,12 @@ void SkipList<Value, Key, numLevels>::insert(const Value& val, const Key& key)
     newNode->key = key;
 
     Node* x = Base::_preHead->nextJump[numLevels - 1];
-    for(int i = numLevels - 1; i > -1; --i) {
+    for(int i = numLevels - 1; i > -1; --i)
+    {
         while (x->nextJump[i]->key <= key && x->nextJump[i] != Base::_preHead)
             x = x->nextJump[i];
-        if(i <= levelHighest){
+        if(i <= levelHighest)
+        {
             newNode->nextJump[i] = x->nextJump[i];
             x->nextJump[i] = newNode;
         }
